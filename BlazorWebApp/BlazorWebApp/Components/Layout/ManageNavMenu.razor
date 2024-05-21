@@ -1,0 +1,47 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using BlazorWebApp.Data
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject NavigationManager NavigationManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject HttpClient HttpClient
+
+<nav>
+    <a href="/" class="btn-theme-s"><i class="fa-solid fa-gear"></i>Account Details</a>
+    <form method="post" action="Account/Logout">
+        <input type="hidden" name="ReturnUrl" value="~/" />
+        <button class="btn-transparent" type="submit">Sign Out</button>
+    </form>   
+</nav>
+
+
+@code {
+
+
+
+    public async Task LogoutUserAsync()
+    {
+        Console.WriteLine("LogoutUserAsync called"); // Lägg till denna rad för att verifiera att metoden anropas
+
+        try
+        {
+            var response = await HttpClient.PostAsync("/Account/Logout", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                // Hantera fel, t.ex. visa ett felmeddelande
+                Console.Error.WriteLine("Failed to log out");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Exception during logout: {ex.Message}");
+        }
+
+    }
+}

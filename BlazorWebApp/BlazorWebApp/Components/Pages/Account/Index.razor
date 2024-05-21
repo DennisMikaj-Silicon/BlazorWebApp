@@ -1,0 +1,192 @@
+﻿@page "/Account/Manage"
+@attribute [StreamRendering]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using BlazorWebApp.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+<PageTitle>Profile</PageTitle>
+
+
+@if (user == null)
+{
+	<p>Loading...</p>
+}
+else
+{
+	<div class="container">
+		<section id="account-details">
+
+
+				<div class="details">
+				<section class="basic-info">
+					<EditForm method="post" Model="Input" FormName="basicinfo" OnValidSubmit="SaveInfo" asp-route-returnUrl="@ReturnUrl" novalidate>
+						<h2>Account Details</h2>
+						<h5>Basic Info</h5>
+
+						<div class="content">
+							<div id="form-firstname" class="input-group">
+								<label>First Name</label>
+								<InputText @bind-Value="@user.FirstName" />
+							</div>
+
+							<div id="form-lastname" class="input-group">
+								<label >Last Name</label>
+								<InputText @bind-Value="@user.LastName" />
+							</div>
+
+							<div id="form-email" class="input-group">
+								<label>Email</label>
+								<InputText @bind-Value="@user.Email" />
+							</div>
+
+
+							<div id="form-bio" class="input-group">
+								<label>Bio <span>(optional)</span></label>
+								<InputTextArea @bind-Value="@user.Biography" />
+							</div>
+
+							<div class="form-buttons">
+								<button class="btn-gray" type="reset">Cancel</button>
+								<button class="btn-theme" type="submit">Save changes</button>
+							</div>
+
+						</div>
+
+					</EditForm>
+
+				</section>
+				<hr />
+				<section class="address-info">
+					@* <EditForm Model="AddressForm" method="post" asp-controller="Account" asp-action="Index" novalidate>
+						<h2>Address</h2>
+
+						<div class="content">
+							<div id="form-addressline-1" class="input-group">
+								<label asp-for="AddressInfo!.AddressLine_1"></label>
+								<span asp-validation-for="AddressInfo!.AddressLine_1"></span>
+								<input asp-for="AddressInfo!.AddressLine_1" />
+							</div>
+
+							<div id="form-addressline-2" class="input-group">
+								<label asp-for="AddressInfo!.AddressLine_2"></label>
+								<span asp-validation-for="AddressInfo!.AddressLine_2"></span>
+								<input asp-for="AddressInfo!.AddressLine_2" />
+							</div>
+
+							<div id="form-postalcode" class="input-group">
+								<label asp-for="AddressInfo!.PostalCode"></label>
+								<span asp-validation-for="AddressInfo!.PostalCode"></span>
+								<input asp-for="AddressInfo!.PostalCode" />
+							</div>
+
+							<div id="form-city" class="input-group">
+								<label asp-for="AddressInfo!.City"></label>
+								<span asp-validation-for="AddressInfo!.City"></span>
+								<input asp-for="AddressInfo!.City" />
+							</div>
+
+							<div id="form-buttons" class="form-buttons">
+								<button class="btn-gray" type="reset">Cancel</button>
+								<button class="btn-theme" type="submit">Save changes</button>
+							</div>
+
+						</div>
+
+					</EditForm> *@
+
+				</section>
+			</div>
+
+		</section>
+	</div>
+}
+
+
+
+
+
+
+@code {
+	private ApplicationUser user = default!;
+
+	private string? username;
+	private string? phoneNumber;
+
+	[CascadingParameter]
+	private HttpContext HttpContext { get; set; } = default!;
+
+	[SupplyParameterFromQuery]
+	private string? ReturnUrl { get; set; }
+
+	[SupplyParameterFromForm]
+	private InputModel Input { get; set; } = new();
+
+
+	[SupplyParameterFromForm]
+	private AddressFormModel AddressForm { get; set; } = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			user = await UserManager.GetUserAsync(HttpContext.User) ?? null!;
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex.Message);
+		}
+
+	}
+
+	public async Task SaveInfo()
+	{
+		var result = await UserManager.UpdateAsync(user);
+	}
+
+
+	private async Task OnValidSubmitAsync()
+	{
+		if (Input.PhoneNumber != phoneNumber)
+		{
+			var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+			if (!setPhoneResult.Succeeded)
+			{
+			}
+		}
+
+		await SignInManager.RefreshSignInAsync(user);
+	}
+
+	private sealed class AddressFormModel
+	{
+		[DataType(DataType.Text)]
+		[Display(Name = "Address Line 1", Prompt = "Enter your address line", Order = 0)]
+		public string AddressLine_1 { get; set; } = null!;
+
+
+
+		[Display(Name = "Address Line 2 (optional)", Prompt = "Enter your second address line", Order = 1)]
+		public string? AddressLine_2 { get; set; }
+
+
+		[Display(Name = "Postal code", Prompt = "Enter your postal code", Order = 2)]
+		[DataType(DataType.PostalCode)]
+		public string PostalCode { get; set; } = null!;
+
+
+		[DataType(DataType.Text)]
+		[Display(Name = "City", Prompt = "Enter your city", Order = 3)]
+		public string City { get; set; } = null!;
+	}
+
+    private sealed class InputModel
+    {
+        [Phone]
+        [Display(Name = "Phone number")]
+        public string? PhoneNumber { get; set; }
+    }
+}

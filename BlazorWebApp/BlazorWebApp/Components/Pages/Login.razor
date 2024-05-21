@@ -1,0 +1,91 @@
+﻿@page "/Account/Login"
+
+
+
+<PageTitle>Log in</PageTitle>
+
+
+<section id="signin">
+    <div class="container">
+        <EditForm FormName="loginform" Model="LoginForm" method="post" OnValidSubmit="LoginUser" asp-route-returnUrl="@ReturnUrl" novalidate>
+            <DataAnnotationsValidator />
+            <h1>Welcome Back</h1>
+            <p>Dont have an account yet? <a asp-controller="Auth" asp-action="Register">Sign up here</a></p>
+
+
+            <div class="content">
+
+                <div id="form-email" class="input-group">
+                    <label>Email</label>
+                    <InputText @bind-Value="LoginForm.Email" />
+                </div>
+                <div id="form-password" class="input-group">
+                    <label>Password</label>
+                    <InputText type="password" @bind-Value="LoginForm.Password" />
+                </div>
+                <div id="form-remember" class="checkbox">
+                    <div class="checkbox-group">
+                        <InputCheckbox @bind-Value="LoginForm.RememberMe" />
+                        <label>Remember me</label>
+                    </div>
+                </div>
+
+                <div class="login-error">
+                    <span class="field-validation-error errormessage"></span>
+                </div>
+                <button id="form-submit" class="btn-theme-s" type="submit">SIGN IN</button>
+
+                <a id="form-forgot-password" asp-controller="Auth" asp-action="Forgot">Forgot your password?</a>
+            </div>
+
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    private string? errorMessage;
+
+
+    [SupplyParameterFromForm]
+    private LoginFormModel LoginForm { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+
+    public async Task LoginUser()
+    {
+        // This doesn't count login failures towards account lockout
+        // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+        var result = await SignInManager.PasswordSignInAsync(LoginForm.Email, LoginForm.Password, LoginForm.RememberMe, lockoutOnFailure: false);
+        if (result.Succeeded)
+        {
+            Logger.LogInformation("User logged in: {UserEmail}", LoginForm.Email); 
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            Logger.LogWarning("Failed login attempt for user: {UserEmail}", LoginForm.Email);
+            errorMessage = "Error: Invalid login attempt.";
+        }
+    }
+
+
+    public class LoginFormModel
+    {
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string Password { get; set; } = "";
+
+        [Display(Name = "Remember me?")]
+        public bool RememberMe { get; set; }
+    }
+
+
+}

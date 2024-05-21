@@ -1,0 +1,95 @@
+﻿@attribute [StreamRendering]
+@inject HttpClient HttpClient
+
+@if(user == null) 
+             {
+                 <p>Loading...</p>
+            } 
+            else {
+                <section id="account-details">
+    <aside>
+        <div class="profile-info">
+            <div class="profile-image">
+            <img src="/images/profile-image.svg" alt="Profile Image" />
+                </div>
+
+                <EditForm Model="this" OnValidSubmit="ProfileImageUpload">
+                    <InputFile OnChange="HandleSelected" hidden/>
+                    <button type="submit" class="btn-gray btn-circle btn-circle-sm">
+                        <i class="fa-regular fa-refresh"></i>
+                    </button>
+                </EditForm>
+                <h5>@user.FirstName @user.LastName</h5>
+                <p>@user.Email</p>
+           
+            </div>
+        </aside>
+    </section>
+
+            }
+
+
+@code {
+    private ApplicationUser user = default!;
+    
+    private IBrowserFile selectedFile;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserManager.GetUserAsync(HttpContext.User) ?? null!;
+    }
+    public async Task LogoutUserAsync()
+    {
+        var response = await HttpClient.PostAsync("/Account/Logout", null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            // Hantera fel, t.ex. visa ett felmeddelande
+            Console.Error.WriteLine("Failed to log out");
+        }
+
+    }
+
+    private void HandleSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    public async Task ProfileImageUpload()
+    {
+        if (selectedFile != null)
+        {
+            var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10 MB max size
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "file", selectedFile.Name);
+
+            try
+            {
+                var response = await Http.PostAsync(Environment.GetEnvironmentVariable("FILEPROVIDER_UPLOAD_URI"), content);
+                response.EnsureSuccessStatusCode();
+                if (response.IsSuccessStatusCode)
+                {
+                    StateHasChanged();
+
+                }
+                else
+                {
+                    Console.WriteLine("File upload failed.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex.Message);
+            }
+        }
+    }
+}

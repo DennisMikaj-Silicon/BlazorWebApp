@@ -1,0 +1,63 @@
+﻿<body>
+
+		
+		<header>
+			<div class="container">
+				<a id="logo" href="/">
+					<img src="/images/logos/logo-light.svg" alt="" />
+				</a>
+				<button onclick="toggleMenu()" class="btn-mobile">
+					<i class="fa-regular fa-bars"></i>
+				</button>
+				<div id="menu">
+					<nav>
+						<NavLink class="menu-link" href="/" >Overview</NavLink>
+						<AuthorizeView>
+							<Authorized>
+								<NavLink class="menu-link" href="/courses">Courses</NavLink>
+							</Authorized>
+							<NotAuthorized>
+								<NavLink class="menu-link" href="#features">Features </NavLink>
+							</NotAuthorized>
+						</AuthorizeView>
+						
+						
+						<NavLink class="menu-link" href="/contacts">Contact</NavLink>
+					</nav>
+				</div>
+
+				<div class="btn-switch">
+					<label>Light</label>
+					<label class="switch" for="switch-mode">
+						<input type="checkbox" id="switch-mode"/>
+						<span class="slider round"></span>
+					</label>
+					<label>Dark</label>
+				</div>
+
+				<div class="account-buttons">
+					<AuthorizeView>
+						<Authorized>
+							<div class="profile-link">
+							<a href="/Account/Manage">
+								<img src="/images/profile-image.svg" alt="Profile image" />
+								</a>
+							</div>
+						</Authorized>
+						<NotAuthorized>
+							<a class="btn-gray" href="/account/login"><i class="fa-solid fa-right-to-bracket"></i><span>Sign In</span></a>
+							<a class="btn-theme" href="/account/register"><i class="fa-regular fa-user"></i><span>Sign Up</span></a>
+						</NotAuthorized>
+					</AuthorizeView>
+						
+					
+											
+				</div>
+
+				<div id="account-buttons" class="hide">
+				</div>
+
+			</div>
+
+		</header>
+	</body>

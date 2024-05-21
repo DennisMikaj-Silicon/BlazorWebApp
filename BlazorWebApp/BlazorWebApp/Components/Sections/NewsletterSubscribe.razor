@@ -1,0 +1,104 @@
+﻿@rendermode InteractiveServer
+
+<section id="signup-section">
+	<div class="newsletter">
+		<div class="container">
+			<div class="title">
+				<h1>Don't want to Miss Anything?</h1>
+				<img src="/images/arrows.svg" alt="decorative arrows" />
+			</div>
+
+			<EditForm FormName="subscribe" Model="SubscribeForm" OnValidSubmit="OnValidSubmit" novalidate>
+				<DataAnnotationsValidator />
+				<div class="newsletter-checkbox-group">
+					<h4 id="title">Sign up for Newsletters</h4>
+					<label>
+						<InputCheckbox @bind-Value="SubscribeForm.DailyNewsletter" id="newsletter" type="checkbox" name="Daily Newsletter" />
+						Daily Newsletter
+					</label>
+					<label>
+						<InputCheckbox @bind-Value="SubscribeForm.AdvertisingUpdates" id=" updates" type="checkbox" name="Advertising Updates" />
+						Advertising Updates
+					</label>
+					<label>
+						<InputCheckbox @bind-Value="SubscribeForm.WeekinReview" id=" review" type="checkbox" name="Week in Review" />
+						Week in Review
+					</label>
+					<label>
+						<InputCheckbox @bind-Value="SubscribeForm.EventUpdates" id=" updates" type="checkbox" name="Event Updates" />
+						Event Updates
+					</label>
+					<label>
+						<InputCheckbox @bind-Value="SubscribeForm.StartupsWeekly" id="startups" type="checkbox" name="Startups Weekly" />
+						Startups Weekly
+					</label>
+					<label>
+						<InputCheckbox @bind-Value="SubscribeForm.Podcasts" id="podcasts" type="checkbox" name="Podcasts" />
+						Podcasts
+					</label>
+				</div>
+				<div class="email-button">
+					<div class="input-with-icon">
+						<i class="fa-regular fa-envelope"></i>
+						<InputText type="email" @bind-Value="SubscribeForm.Email" placeholder="Your Email" />
+					</div>
+					<div class="subscribe-button">
+						<button type="submit" class="btn-theme">Subscribe*</button>
+					</div>
+					<ValidationMessage For="@(() => SubscribeForm.Email)"/>
+				</div>
+				
+					<p>@StatusMessage</p>
+				
+				
+			</EditForm>
+			
+			
+
+		</div>
+	</div>
+</section>
+
+
+@code {
+	[SupplyParameterFromQuery]
+	public string StatusMessage { get; set; } = "* Yes, I agree to the terms and privacy policy.";
+
+	[SupplyParameterFromForm]
+	public SubscribeFormModel SubscribeForm { get; set; } = new SubscribeFormModel();
+
+
+	private async Task OnValidSubmit()
+	{
+		try
+		{
+			var result = await Http.PostAsJsonAsync("https://newsletterprovider-dennismikaj-silicon.azurewebsites.net/api/Subscribe?code=LTK4pxEqHBJul_ONwIYH1PJ-6lvMOBJBjsNmbOJZWNmpAzFuH2w4DQ==", SubscribeForm);
+			if (result.IsSuccessStatusCode)
+				StatusMessage = "You are now subscribed.";
+		}
+		catch {
+			StatusMessage = "Unable to subscribe, please try again later.";
+		}
+
+		SubscribeForm = new SubscribeFormModel();
+
+		
+
+
+	}
+
+	public class SubscribeFormModel
+	{
+		[Required(ErrorMessage = "You must enter an valid email")]
+		[EmailAddress]
+		[Display(Name = "Subscribe", Prompt = "Enter your email address")]
+		public string Email { get; set; } = null!;
+		public bool IsSubscribed { get; set; } = false;
+		public bool DailyNewsletter { get; set; }
+		public bool AdvertisingUpdates { get; set; }
+		public bool WeekinReview { get; set; }
+		public bool EventUpdates { get; set; }
+		public bool StartupsWeekly { get; set; }
+		public bool Podcasts { get; set; }
+	}
+}

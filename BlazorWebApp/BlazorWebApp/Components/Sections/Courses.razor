@@ -1,0 +1,130 @@
+﻿@attribute [StreamRendering]
+@inject HttpClient Http
+
+
+<section>
+	<div class="container">
+		<nav class="breadcrumbs">
+			<a href="/"><i class=" fa-solid fa-house"></i>Home</a>
+			<i class="fa-solid fa-angles-right"></i>
+			<a href="/courses" class="active">Courses</a>
+		</nav>
+		<div class="title">
+			<h1>Courses</h1>
+			<div class="dropdown">
+				<select>
+					<option value="all" disabled selected>All Categories</option>
+				</select>
+			</div>
+			<div class="searchbar">
+				<input type="text" placeholder="Search courses">
+				<span><i class="fa-solid fa-magnifying-glass"></i></span>
+			</div>
+		</div>
+		<div class="course-grid">
+			@if (courses == null)
+			{
+				<p><em>Attempting to find courses...</em></p>
+			}
+			else
+			{
+				@foreach (var course in courses)
+				{
+					<div class="course-content">
+						<div class="inside-image">
+							@if (course.IsBestseller)
+							{
+								<p class="best-seller">Best Seller</p>
+
+							}
+							<img src="~/images/@course.ImageName" alt="@course.Id" class="course-image" />
+							<div class="bookmark">
+								<a class="btn-circle-sm btn-circle bookmark" asp-action="Join" asp-controller="Courses"><i class="fa-regular fa-bookmark"></i></a>
+							</div>
+						</div>
+						<h6>@course.Title</h6>
+						<p>@course.Author</p>
+
+						@if (course.DiscountPrice > 0)
+						{
+							<p class="price-sale">$@course.DiscountPrice<span>$@course.OriginalPrice</span></p>
+						}
+						else
+						{
+							<p class="price">$@course.OriginalPrice</p>
+						}
+
+
+						<hr />
+						<div class="bottom">
+							<p><i class="fa-regular fa-clock"></i>@course.Hours Hours</p>
+							<p><i class="fa-regular fa-thumbs-up"></i>@course.LikesInPercent% (@course.LikesInNumbers K)</p>
+						</div>
+					</div>
+				}
+			
+
+
+		<ul class="pagination">
+			<li><a href="#"><i class="fa-solid fa-arrow-left"></i></a></li>
+			<li><a href="#">1</a></li>
+			<li><a href="#">2</a></li>
+			<li><a href="#">3</a></li>
+			<li><a href="#">4</a></li>
+			<li><a href="#"><i class="fa-solid fa-arrow-right"></i></a></li>
+
+		</ul>
+	
+			}
+				</div>
+			</div>
+</section>
+
+
+<section>
+	<div class="container">
+		<div class="bottom-section">
+			<div class="text-section">
+				<p>Ready to get started?</p>
+				<h2>Take Your <span>Skills</span> to the<br /> Next Level</h2>
+				<button class="btn-theme">Work with us</button>
+			</div>
+			<div>
+				<img src="/images/illustration.svg" alt="illustration image" />
+			</div>
+
+		</div>
+
+	</div>
+
+
+</section>
+
+
+@code {
+	private CourseModel[]? courses;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			courses = await Http.GetFromJsonAsync<CourseModel[]>(Environment.GetEnvironmentVariable("COURSES_API_URI"));
+		}
+		catch (Exception ex) {	}
+	}
+
+	private class CourseModel
+	{
+		[Key]
+		public int Id { get; set; }
+		public string Title { get; set; } = null!;
+		public string? ImageName { get; set; }
+		public string? Author { get; set; }
+		public bool IsBestseller { get; set; }
+		public int Hours { get; set; }
+		public decimal OriginalPrice { get; set; }
+		public decimal DiscountPrice { get; set; }
+		public decimal LikesInPercent { get; set; }
+		public decimal LikesInNumbers { get; set; }
+	}
+}
