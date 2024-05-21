@@ -111,7 +111,8 @@ else
 
 
 @code {
-	private ApplicationUser user = default!;
+	[Parameter]
+	public ApplicationUser user { get; set; } = default!;
 
 	private string? username;
 	private string? phoneNumber;

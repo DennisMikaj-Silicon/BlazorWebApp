@@ -90,6 +90,7 @@
             if (alreadyExists != null)
             {
                 StatusMessage = "An account with that e-mail address already exists.";
+                StateHasChanged();
                 return;
             }
 
@@ -97,17 +98,19 @@
             if (!result.Succeeded)
             {
                 StatusMessage = "Unable to register account, please try again.";
+                StateHasChanged();
                 return;
             }
             await SignInManager.SignInAsync(user, isPersistent: false);
-            NavigationManager.NavigateTo(ReturnUrl ?? "/");
             
         }
         catch (Exception ex)
         {
             StatusMessage = $"An error occured while creating the account: {ex.Message}";
+            StateHasChanged();
             return;
         }
+        await InvokeAsync(() => NavigationManager.NavigateTo(ReturnUrl ?? "/"));
 
         
     }
