@@ -1,4 +1,6 @@
-﻿@attribute [StreamRendering]
+﻿@using BlazorWebApp.Client.Models
+@using System.Text.Json
+@attribute [StreamRendering]
 @inject HttpClient Http
 
 
@@ -24,7 +26,7 @@
 		<div class="course-grid">
 			@if (courses == null)
 			{
-				<p><em>Attempting to find courses...</em></p>
+				<p class="text-center"><em>Attempting to find courses...</em></p>
 			}
 			else
 			{
@@ -35,9 +37,10 @@
 							@if (course.IsBestseller)
 							{
 								<p class="best-seller">Best Seller</p>
-
 							}
-							<img src="~/images/@course.ImageName" alt="@course.Id" class="course-image" />
+							<NavLink href="@( $"course-details/{course.Id}" )">
+								<img src="@course.ImageUri" alt="@course.Id" class="course-image" />
+							</NavLink>
 							<div class="bookmark">
 								<a class="btn-circle-sm btn-circle bookmark" asp-action="Join" asp-controller="Courses"><i class="fa-regular fa-bookmark"></i></a>
 							</div>
@@ -45,20 +48,21 @@
 						<h6>@course.Title</h6>
 						<p>@course.Author</p>
 
-						@if (course.DiscountPrice > 0)
+						@if (course.Discount > 0)
 						{
-							<p class="price-sale">$@course.DiscountPrice<span>$@course.OriginalPrice</span></p>
+							<p class="price-sale">$@course.Discount<span>$@course.Price</span></p>
 						}
 						else
 						{
-							<p class="price">$@course.OriginalPrice</p>
+
+							<p class="price">$@course.Price</p>
 						}
 
 
 						<hr />
 						<div class="bottom">
 							<p><i class="fa-regular fa-clock"></i>@course.Hours Hours</p>
-							<p><i class="fa-regular fa-thumbs-up"></i>@course.LikesInPercent% (@course.LikesInNumbers K)</p>
+							<p><i class="fa-regular fa-thumbs-up"></i>@course.LikesInPercent% (@course.Likes K)</p>
 						</div>
 					</div>
 				}
@@ -102,29 +106,86 @@
 
 
 @code {
-	private CourseModel[]? courses;
+	public CourseModel[]? courses;
 
 	protected override async Task OnInitializedAsync()
 	{
-		try
+
+		var query = new GraphQLQuery { Query = "{getAllCourses {id isBestSeller title authors{name} prices{price discount} hours likesInPercent likes imageUri}}" };
+		var response = await Http.PostAsJsonAsync("http://localhost:7241/api/graphql", query);
+
+		if(response.IsSuccessStatusCode)
 		{
-			courses = await Http.GetFromJsonAsync<CourseModel[]>(Environment.GetEnvironmentVariable("COURSES_API_URI"));
+			var result = await response.Content.ReadFromJsonAsync<DynamicGraphQLResponse>();
+			courses = result?.Data.GetProperty("getAllCourses").EnumerateArray()
+				.Select(course => new CourseModel
+					{
+						Id = course.GetProperty("id").GetString(),
+						IsBestseller = course.GetProperty("isBestSeller").GetBoolean(),
+						ImageUri = course.GetProperty("imageUri").GetString(),
+						Title = course.GetProperty("title").GetString(),
+						Author = GetFirstAuthor(course.GetProperty("authors")),
+						Price = GetFirstPrice(course.GetProperty("prices")),
+						Discount = GetFirstDiscount(course.GetProperty("prices")),
+						Hours = course.GetProperty("hours").GetString(),
+						Likes = course.GetProperty("likes").GetString(),
+						LikesInPercent = course.GetProperty("likesInPercent").GetString()
+					})
+			.ToArray();
 		}
-		catch (Exception ex) {	}
 	}
 
-	private class CourseModel
+	private string GetFirstAuthor(JsonElement authorsElement)
+	{
+		if (authorsElement.ValueKind == JsonValueKind.Array)
+		{
+			return authorsElement.EnumerateArray().First().GetProperty("name").GetString();
+		}
+		else if (authorsElement.ValueKind == JsonValueKind.Object)
+		{
+			return authorsElement.GetProperty("name").GetString();
+		}
+		return string.Empty;
+	}
+
+	private decimal GetFirstPrice(JsonElement pricesElement)
+	{
+		if (pricesElement.ValueKind == JsonValueKind.Array)
+		{
+			return pricesElement.EnumerateArray().First().GetProperty("price").GetDecimal();
+		}
+		else if (pricesElement.ValueKind == JsonValueKind.Object)
+		{
+			return pricesElement.GetProperty("price").GetDecimal();
+		}
+		return 0m;
+	}
+
+	private decimal GetFirstDiscount(JsonElement pricesElement)
+	{
+		if (pricesElement.ValueKind == JsonValueKind.Array)
+		{
+			return pricesElement.EnumerateArray().First().GetProperty("discount").GetDecimal();
+		}
+		else if (pricesElement.ValueKind == JsonValueKind.Object)
+		{
+			return pricesElement.GetProperty("discount").GetDecimal();
+		}
+		return 0m;
+	}
+
+	public class CourseModel
 	{
 		[Key]
-		public int Id { get; set; }
-		public string Title { get; set; } = null!;
-		public string? ImageName { get; set; }
+		public string? Id { get; set; }
+		public string? Title { get; set; }
+		public string? ImageUri { get; set; }
 		public string? Author { get; set; }
 		public bool IsBestseller { get; set; }
-		public int Hours { get; set; }
-		public decimal OriginalPrice { get; set; }
-		public decimal DiscountPrice { get; set; }
-		public decimal LikesInPercent { get; set; }
-		public decimal LikesInNumbers { get; set; }
+		public string? Hours { get; set; }
+		public Decimal Price { get; set; }
+		public Decimal Discount { get; set; }
+		public string? LikesInPercent { get; set; }
+		public string? Likes { get; set; }
 	}
 }
