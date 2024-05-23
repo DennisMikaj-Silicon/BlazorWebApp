@@ -3,7 +3,7 @@
 @using System.Text.Json
 @inject HttpClient Http
 
-
+<link href="/coursedetails.css" rel="stylesheet" />
 
 
 @if (course == null)
@@ -12,18 +12,42 @@
 }
 else
 {
-    <div class="container">
-    <h1>@course.Title</h1>
-    <img src="@course?.ImageHeaderUri" alt="@course?.Title" />
-    <p>@course!.Ingress</p>
-    <p>@course.StarRating</p>
-    <p>(@course.Reviews)</p>
-    <p>@course.Likes</p>
-    <p>@course.Hours</p>
+    <div class="inside-image">
+        <div class="row justify-content-start">
+            @if (course.IsBestseller)
+            {
+                <p class="best-seller col-4">Best Seller</p>
+            }
+            @if (course.IsDigital)
+            {
+                <p class="col-4 digital">Digital</p>
+            }
+        </div>
+        <img src="@course.ImageHeaderUri" alt="@course.Title" class="course-image" />
+        <div class="inside-text">
+            <h1>@course.Title</h1>
+            <p>@course.Ingress</p>
+            <div>
+            @for (int i = 0; i < course.StarRating; i++)
+            {
+                <i class="fa-solid fa-star"></i>
+            }
+            @for (int i = course.StarRating; i < 5; i++)
+            {
+                <i class="fa-regular fa-star"></i>
+            }
+                <span>(@course.Reviews)</span>
+                <div class="vr"></div>
+                <span>@course.Likes Likes</span>
+                <div class="vr"></div>
+                <span>@course.Hours</span>
+
+            </div>
+        </div>
     </div>
 
     <div>
-        @course!.Description
+        @course.Description
     </div>
 }
 
