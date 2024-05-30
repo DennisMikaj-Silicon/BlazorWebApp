@@ -18,16 +18,20 @@ else
             {
                 <p class="best-seller col-4">Best Seller</p>
             }
-            @if (course.IsDigital)
+            @if (course.IsDigital && course.IsBestseller)
             {
                 <p class="col-4 digital">Digital</p>
+            } else
+            {
+                <p class="col-4 digital-solo">Digital</p>
+
             }
         </div>
         <img src="@course.ImageHeaderUri" alt="@course.Title" class="course-image" />
         <div class="inside-text">
             <h1>@course.Title</h1>
             <p>@course.Ingress</p>
-            <div>
+            <div class="course-info">
             @for (int i = 0; i < course.StarRating; i++)
             {
                 <i class="fa-solid fa-star"></i>
@@ -41,18 +45,37 @@ else
                 <span>@course.Likes Likes</span>
                 <div class="vr"></div>
                 <span>@course.Hours</span>
-
+                <div>
+                    <h5>@course.Author</h5>
+                </div>
             </div>
         </div>
     </div>
 
-    <div>
-        @course.Description
+    <div class="container">
+        @((MarkupString)course.Description!)
+        
     </div>
+
+        <div class="course-card">
+            <h1>This Course Includes:</h1>
+            <ul>
+        @foreach (var item in course.Includes)
+        {
+            <li>@item</li>
+        }
+        
+    </ul>
+        <div>
+            <h1>$ @course.Price</h1>
+            @if (course.Discount < 0)
+            {
+                <h3>@course.Discount</h3>
+            }
+        </div>
+        <button class="btn-theme">Join Course</button>
+</div>
 }
-
-
-
 
 
 
@@ -83,6 +106,7 @@ else
                 course = new CourseModel
                     {
                         Id = courseElement.Value.GetProperty("id").GetString(),
+
                         IsBestseller = courseElement.Value.GetProperty("isBestSeller").GetBoolean(),
                         IsDigital = courseElement.Value.GetProperty("isDigital").GetBoolean(),
                         ImageHeaderUri = courseElement.Value.GetProperty("imageHeaderUri").GetString(),

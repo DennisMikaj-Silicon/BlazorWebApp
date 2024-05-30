@@ -8,10 +8,12 @@
 @inject HttpClient HttpClient
 
 <nav>
-    <a href="/" class="btn-theme-s"><i class="fa-solid fa-gear"></i>Account Details</a>
+    <NavLink href="/Account/Manage" class="btn-theme-s"><i class="fa-solid fa-gear"></i>Account Details</NavLink>
+    <NavLink href="/Account/Notifications" class="btn-transparent"><i class="fa-regular fa-bell"></i>Notifications</NavLink>
     <form method="post" action="Account/Logout">
         <input type="hidden" name="ReturnUrl" value="~/" />
-        <button class="btn-transparent" type="submit">Sign Out</button>
+        <button class="btn-transparent" type="submit"><i class="fa-solid fa-arrow-left"></i>Sign Out</button>
+
     </form>   
 </nav>
 
@@ -22,7 +24,6 @@
 
     public async Task LogoutUserAsync()
     {
-        Console.WriteLine("LogoutUserAsync called"); // Lägg till denna rad för att verifiera att metoden anropas
 
         try
         {
@@ -34,7 +35,6 @@
             }
             else
             {
-                // Hantera fel, t.ex. visa ett felmeddelande
                 Console.Error.WriteLine("Failed to log out");
             }
         }

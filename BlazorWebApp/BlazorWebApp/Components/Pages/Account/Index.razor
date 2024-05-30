@@ -4,12 +4,19 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using BlazorWebApp.Data
+@using Microsoft.AspNetCore.Mvc
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 
 <PageTitle>Profile</PageTitle>
 
+@if (!string.IsNullOrEmpty(@StatusMessage))
+{
+	<div class="alert alert-danger">
+		@StatusMessage
+	</div>
+}
 
 @if (user == null)
 {
@@ -23,30 +30,31 @@ else
 
 				<div class="details">
 				<section class="basic-info">
-					<EditForm method="post" Model="Input" FormName="basicinfo" OnValidSubmit="SaveInfo" asp-route-returnUrl="@ReturnUrl" novalidate>
+					<EditForm FormName="inputform" Model="Input" OnValidSubmit="SaveInfo" asp-route-returnUrl="@ReturnUrl" method="post" novalidate>
 						<h2>Account Details</h2>
 						<h5>Basic Info</h5>
+						<DataAnnotationsValidator />
 
 						<div class="content">
 							<div id="form-firstname" class="input-group">
 								<label>First Name</label>
-								<InputText @bind-Value="@user.FirstName" />
+								<InputText @bind-Value="@Input.FirstName" placeholder="@user.FirstName" />
 							</div>
 
 							<div id="form-lastname" class="input-group">
 								<label >Last Name</label>
-								<InputText @bind-Value="@user.LastName" />
+								<InputText @bind-Value="@Input.LastName" placeholder="@user.LastName" />
 							</div>
 
 							<div id="form-email" class="input-group">
 								<label>Email</label>
-								<InputText @bind-Value="@user.Email" />
+								<InputText @bind-Value="@Input.Email" placeholder="@user.Email" />
 							</div>
 
 
 							<div id="form-bio" class="input-group">
 								<label>Bio <span>(optional)</span></label>
-								<InputTextArea @bind-Value="@user.Biography" />
+								<InputTextArea @bind-Value="@Input.Biography" placeholder="@user.Biography" />
 							</div>
 
 							<div class="form-buttons">
@@ -61,43 +69,31 @@ else
 				</section>
 				<hr />
 				<section class="address-info">
-					@* <EditForm Model="AddressForm" method="post" asp-controller="Account" asp-action="Index" novalidate>
+					@* <EditForm FormName="addressform" Model="AddressForm" OnValidSubmit="SaveAddress" asp-route-returnUrl="@ReturnUrl" method="post" novalidate>
 						<h2>Address</h2>
-
 						<div class="content">
 							<div id="form-addressline-1" class="input-group">
-								<label asp-for="AddressInfo!.AddressLine_1"></label>
-								<span asp-validation-for="AddressInfo!.AddressLine_1"></span>
-								<input asp-for="AddressInfo!.AddressLine_1" />
+								<label asp-for="AddressForm.AddressLine_1"></label>
+								<InputText @bind-Value="@AddressForm.AddressLine_1" placeholder="@userAddress.AddressLine_1" />
 							</div>
-
 							<div id="form-addressline-2" class="input-group">
-								<label asp-for="AddressInfo!.AddressLine_2"></label>
-								<span asp-validation-for="AddressInfo!.AddressLine_2"></span>
-								<input asp-for="AddressInfo!.AddressLine_2" />
+								<label asp-for="AddressForm.AddressLine_2"></label>
+								<InputText @bind-Value="@AddressForm.AddressLine_2" placeholder="@userAddress.AddressLine_2" />
 							</div>
-
 							<div id="form-postalcode" class="input-group">
-								<label asp-for="AddressInfo!.PostalCode"></label>
-								<span asp-validation-for="AddressInfo!.PostalCode"></span>
-								<input asp-for="AddressInfo!.PostalCode" />
+								<label asp-for="AddressForm.PostalCode"></label>
+								<InputText @bind-Value="@AddressForm.PostalCode" placeholder="@userAddress.PostalCode" />
 							</div>
-
 							<div id="form-city" class="input-group">
-								<label asp-for="AddressInfo!.City"></label>
-								<span asp-validation-for="AddressInfo!.City"></span>
-								<input asp-for="AddressInfo!.City" />
+								<label asp-for="AddressForm.City"></label>
+								<InputText @bind-Value="@AddressForm.City" placeholder="@userAddress.City" />
 							</div>
-
-							<div id="form-buttons" class="form-buttons">
+							<div class="form-buttons">
 								<button class="btn-gray" type="reset">Cancel</button>
 								<button class="btn-theme" type="submit">Save changes</button>
 							</div>
-
 						</div>
-
 					</EditForm> *@
-
 				</section>
 			</div>
 
@@ -114,26 +110,30 @@ else
 	[Parameter]
 	public ApplicationUser user { get; set; } = default!;
 
-	private string? username;
-	private string? phoneNumber;
+	[Parameter]
+	public UserAddress userAddress { get; set; } = default!;
+
+	[SupplyParameterFromQuery]
+	public string StatusMessage { get; set; } = "";
 
 	[CascadingParameter]
 	private HttpContext HttpContext { get; set; } = default!;
 
 	[SupplyParameterFromQuery]
-	private string? ReturnUrl { get; set; }
+	public string? ReturnUrl { get; set; }
 
 	[SupplyParameterFromForm]
-	private InputModel Input { get; set; } = new();
+	public InputModel Input { get; set; } = new();
 
 
 	[SupplyParameterFromForm]
-	private AddressFormModel AddressForm { get; set; } = new();
+	public AddressFormModel AddressForm { get; set; } = new();
 
-	protected override async Task OnInitializedAsync()
+	protected override async Task OnParametersSetAsync()
 	{
 		try
 		{
+			await Task.Delay(1000);
 			user = await UserManager.GetUserAsync(HttpContext.User) ?? null!;
 		}
 		catch (Exception ex)
@@ -143,26 +143,76 @@ else
 
 	}
 
-	public async Task SaveInfo()
+	public async Task SaveInfo(EditContext editContext)
 	{
-		var result = await UserManager.UpdateAsync(user);
-	}
-
-
-	private async Task OnValidSubmitAsync()
-	{
-		if (Input.PhoneNumber != phoneNumber)
+		if (Input != null)
 		{
-			var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-			if (!setPhoneResult.Succeeded)
+			if (Input.FirstName != null && Input.LastName != null && Input.Email != null)
 			{
+
+				var user = await UserManager.GetUserAsync(HttpContext.User);
+				if (user != null)
+				{
+					user.FirstName = Input.FirstName;
+					user.LastName = Input.LastName;
+					user.Email = Input.Email;
+					user.Biography = Input.Biography;
+
+					var result = await UserManager.UpdateAsync(user);
+					if (!result.Succeeded)
+					{
+						StatusMessage = "Failed to update information.";
+						StateHasChanged();
+					}
+					NavigationManager.NavigateTo("/Account/Manage");
+				}
 			}
 		}
 
-		await SignInManager.RefreshSignInAsync(user);
+
+
 	}
 
-	private sealed class AddressFormModel
+
+	public async Task SaveAddress(EditContext editContext)
+	{
+		try
+		{
+			var user = await UserManager.GetUserAsync(HttpContext.User);
+			if (user != null)
+			{
+				if (userAddress == null)
+				{
+					userAddress = new UserAddress();
+				}
+
+				userAddress.AddressLine_1 = AddressForm.AddressLine_1;
+				userAddress.AddressLine_2 = AddressForm.AddressLine_2;
+				userAddress.City = AddressForm.City;
+				userAddress.PostalCode = AddressForm.PostalCode;
+
+				var result = await UserManager.UpdateAsync(user);
+				if (!result.Succeeded)
+				{
+					StatusMessage = "Failed to update address information.";
+					StateHasChanged();
+				}
+				else
+				{
+					NavigationManager.NavigateTo("/Account/Manage");
+
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			var errorMessage = $"Failed to update address information: {ex.Message}";
+			Logger.LogError(errorMessage);
+		}
+
+	}
+
+	public class AddressFormModel
 	{
 		[DataType(DataType.Text)]
 		[Display(Name = "Address Line 1", Prompt = "Enter your address line", Order = 0)]
@@ -184,10 +234,11 @@ else
 		public string City { get; set; } = null!;
 	}
 
-    private sealed class InputModel
+	public class InputModel
     {
-        [Phone]
-        [Display(Name = "Phone number")]
-        public string? PhoneNumber { get; set; }
+		public string? FirstName { get; set; }
+		public string? LastName { get; set; }
+		public string? Email { get; set; }
+		public string? Biography { get; set; }
     }
 }

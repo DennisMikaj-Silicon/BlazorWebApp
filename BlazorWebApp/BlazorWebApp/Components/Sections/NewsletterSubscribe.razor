@@ -7,7 +7,7 @@
 				<h1>Don't want to Miss Anything?</h1>
 				<img src="/images/arrows.svg" alt="decorative arrows" />
 			</div>
-
+			
 			<EditForm FormName="subscribe" Model="SubscribeForm" OnValidSubmit="OnValidSubmit" novalidate>
 				<DataAnnotationsValidator />
 				<div class="newsletter-checkbox-group">
@@ -72,7 +72,7 @@
 	{
 		try
 		{
-			var result = await Http.PostAsJsonAsync("https://newsletterprovider-dennismikaj-silicon.azurewebsites.net/api/Subscribe?code=LTK4pxEqHBJul_ONwIYH1PJ-6lvMOBJBjsNmbOJZWNmpAzFuH2w4DQ==", SubscribeForm);
+			var result = await Http.PostAsJsonAsync("https://newsletterprovider-dennismikaj-silicon.azurewebsites.net/api/Subscribe?code=LTK4pxEqHBJul_ONwIYH1PJ-6lvMOBJBjsNmbOJZWNmpAzFuH2w4DQ%3D%3D", SubscribeForm);
 			if (result.IsSuccessStatusCode)
 				StatusMessage = "You are now subscribed.";
 		}

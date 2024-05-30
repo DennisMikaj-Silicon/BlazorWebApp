@@ -1,0 +1,166 @@
+﻿@page "/Account/Notifications"
+@using System.Text.Json
+
+@rendermode InteractiveServer
+
+
+<link rel="stylesheet" href="/notifications.css" />
+
+<section class="container">
+    <div>
+        <h1>Notifications</h1>
+        <EditForm method="post" Model="@subscriberModel" FormName="subscribeform" OnValidSubmit="SaveSubscriptionSetting">
+            <p>Preferred email for notifications</p>
+            <div id="form-email" class="input-group">
+                <label>Email Address</label>
+                @if (user != null) 
+                {
+                <InputText type="email" @bind-Value="subscriberModel.Email" placeholder="Enter your email"/>
+
+                }
+                <div class="btn-switch">
+                    <label class="switch-notification" for="switch-mode-newsletter">
+                        <InputCheckbox type="checkbox" id="switch-mode-newsletter" @bind-Value="subscriberModel.SubscribeToNewsletter" />
+                        <span class="slider round"></span>
+                    </label>
+                    <label for="switch-mode-newsletter">Subscribe to Newsletter</label>
+                </div>
+                <p class="notification-text">Nec, posuere non felis duis massa vitae aliquet interdum scelerisque. Neque ullamcorper.</p>
+
+                <div class="form-buttons d-flex">
+                    <button class="btn-gray" type="reset">Cancel</button>
+                    <button class="btn-theme" type="submit">Save changes</button>
+                </div>
+            </div>
+            @StatusMessage
+
+            <ValidationSummary />
+        </EditForm>
+
+        <div class="form-email mt-5">
+        <EditForm method="post" Model="@unSubscriberModel" FormName="unsubscribeform" OnValidSubmit="UnSubscribe">
+            <h3>Wish to unsubscribe?</h3>
+            <label>Enter your email here:</label>
+            @if (user != null)
+            {
+                <InputText type="email" @bind-Value="unSubscriberModel.Email" placeholder="Enter your email" />
+            }
+            <div class="form-buttons d-flex">
+                <button class="btn-gray" type="reset">Cancel</button>
+                <button class="btn-theme" type="submit">Save changes</button>
+            </div>
+        </EditForm>
+        </div>
+    </div>
+</section>
+
+@code {
+
+
+    public SubscriberModel subscriberModel = new SubscriberModel();
+
+    public UnSubscriberModel unSubscriberModel = new UnSubscriberModel();
+
+    public string StatusMessage { get; set; } = "* Yes, I agree to the terms and privacy policy.";
+
+    [Parameter]
+    public ApplicationUser user { get; set; } = default!;
+
+    [Inject]
+    private UserManager<ApplicationUser> UserManagerLocal { get; set; } = default!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+
+    // [CascadingParameter]
+    // private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500);
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var currentUser = authState.User;
+
+        if (currentUser.Identity.IsAuthenticated)
+        {
+            user = await UserManagerLocal.GetUserAsync(currentUser);
+
+            if (user != null)
+            {
+                subscriberModel = new SubscriberModel
+                    {
+                        Email = user.Email
+                    };
+            }
+        }
+
+        StateHasChanged();
+    }
+
+
+    public class SubscriberModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        public string? Email { get; set; }
+
+        public bool SubscribeToNewsletter { get; set; }
+
+    }
+
+    public class UnSubscriberModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        public string? Email { get; set; }
+
+    }
+
+    public async Task UnSubscribe()
+    {
+        if (unSubscriberModel != null)
+        {
+            var result = await Http.PostAsJsonAsync("http://localhost:7214/api/Unsubscribe", unSubscriberModel);
+
+            
+            if (result.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                StatusMessage = "You are now unsubscribed.";
+                StateHasChanged();
+            }
+            else
+            {
+                StatusMessage = "Unable to unsubscribe, try again later.";
+                StateHasChanged();
+            }
+
+        }
+    }
+
+
+    public async Task SaveSubscriptionSetting()
+    {
+        if (subscriberModel != null)
+        {
+            var result = await Http.PostAsJsonAsync("http://localhost:7214/api/Subscribe", subscriberModel);
+
+            if (result.StatusCode == System.Net.HttpStatusCode.Created)
+            {
+                StatusMessage = "Thank you for subscribing.";
+                StateHasChanged();
+            }
+            else if (result.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                StatusMessage = "Email address has been updated!";
+                StateHasChanged();
+            }
+            else
+            {
+                StatusMessage = "Unable to subscribe, try again later.";
+                StateHasChanged();
+            }
+
+        }
+    }
+
+}
