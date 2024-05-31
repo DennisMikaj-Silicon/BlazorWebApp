@@ -67,7 +67,7 @@
         if (selectedFile != null)
         {
             var content = new MultipartFormDataContent();
-            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10 MB max size
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024));
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
             content.Add(fileContent, "file", selectedFile.Name);
 
