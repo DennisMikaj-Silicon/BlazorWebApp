@@ -68,9 +68,9 @@ else
     </ul>
         <div>
             <h1>$ @course.Price</h1>
-            @if (course.Discount < 0)
+            @if (course.Discount > 0)
             {
-                <h3>@course.Discount</h3>
+                <h1 class="price-sale">@course.Discount</h1>
             }
         </div>
         <button class="btn-theme">Join Course</button>
